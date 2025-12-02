@@ -56,7 +56,7 @@ class StorageService {
    */
   async createAgent(input: CreateAgentInput): Promise<Agent> {
     try {
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('agents')
         .insert([
           {
@@ -65,6 +65,11 @@ class StorageService {
             context: input.context,
             instructions: input.instructions,
             knowledge: input.knowledge,
+            category: input.category,
+            status: input.status || 'draft',
+            tags: input.tags ? JSON.stringify(input.tags) : null,
+            icon: input.icon,
+            color: input.color,
           },
         ])
         .select()
@@ -87,15 +92,21 @@ class StorageService {
    */
   async updateAgent(id: string, input: Partial<CreateAgentInput>): Promise<Agent | null> {
     try {
+      const updateData: any = {};
+      if (input.name !== undefined) updateData.name = input.name;
+      if (input.description !== undefined) updateData.description = input.description;
+      if (input.context !== undefined) updateData.context = input.context;
+      if (input.instructions !== undefined) updateData.instructions = input.instructions;
+      if (input.knowledge !== undefined) updateData.knowledge = input.knowledge;
+      if (input.category !== undefined) updateData.category = input.category;
+      if (input.status !== undefined) updateData.status = input.status;
+      if (input.tags !== undefined) updateData.tags = JSON.stringify(input.tags);
+      if (input.icon !== undefined) updateData.icon = input.icon;
+      if (input.color !== undefined) updateData.color = input.color;
+
       const { data, error } = await supabase
         .from('agents')
-        .update({
-          ...(input.name && { name: input.name }),
-          ...(input.description && { description: input.description }),
-          ...(input.context && { context: input.context }),
-          ...(input.instructions && { instructions: input.instructions }),
-          ...(input.knowledge && { knowledge: input.knowledge }),
-        })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
@@ -177,6 +188,15 @@ class StorageService {
    * Map Supabase response (snake_case) to Agent type (camelCase)
    */
   private mapSupabaseToAgent(data: any): Agent {
+    let tags: string[] | undefined;
+    if (data.tags) {
+      try {
+        tags = typeof data.tags === 'string' ? JSON.parse(data.tags) : data.tags;
+      } catch {
+        tags = undefined;
+      }
+    }
+
     return {
       id: data.id,
       name: data.name,
@@ -184,6 +204,11 @@ class StorageService {
       context: data.context,
       instructions: data.instructions,
       knowledge: data.knowledge,
+      category: data.category,
+      status: data.status,
+      tags,
+      icon: data.icon,
+      color: data.color,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };

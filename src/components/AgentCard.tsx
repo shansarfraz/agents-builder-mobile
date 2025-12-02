@@ -1,42 +1,92 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Agent } from '../types/Agent';
+import { getCategoryColor, getCategoryName } from '../data/agentTemplates';
 
 interface AgentCardProps {
   agent: Agent;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-export const AgentCard: React.FC<AgentCardProps> = ({ agent, onPress }) => {
+const getStatusColor = (status?: string) => {
+  switch (status) {
+    case 'active':
+      return '#34C759';
+    case 'draft':
+      return '#FF9500';
+    case 'archived':
+      return '#8E8E93';
+    default:
+      return '#8E8E93';
+  }
+};
+
+const getStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'active':
+      return 'Active';
+    case 'draft':
+      return 'Draft';
+    case 'archived':
+      return 'Archived';
+    default:
+      return 'Draft';
+  }
+};
+
+export const AgentCard: React.FC<AgentCardProps> = ({ agent, onPress, onLongPress }) => {
+  const categoryColor = agent.category ? getCategoryColor(agent.category) : '#8E8E93';
+  const categoryName = agent.category ? getCategoryName(agent.category) : 'General';
+  const iconEmoji = agent.icon || '🤖';
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.name}>{agent.name}</Text>
-        <Text style={styles.date}>
-          {new Date(agent.updatedAt).toLocaleDateString()}
-        </Text>
+    <TouchableOpacity
+      style={[styles.card, { borderLeftColor: categoryColor }]}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <View style={[styles.iconContainer, { backgroundColor: categoryColor + '20' }]}>
+            <Text style={styles.icon}>{iconEmoji}</Text>
+          </View>
+          <View style={styles.headerInfo}>
+            <Text style={styles.name} numberOfLines={1}>
+              {agent.name}
+            </Text>
+            <Text style={styles.category}>{categoryName}</Text>
+          </View>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(agent.status) }]}>
+          <Text style={styles.statusText}>{getStatusLabel(agent.status)}</Text>
+        </View>
       </View>
+
       {agent.description && (
         <Text style={styles.description} numberOfLines={2}>
           {agent.description}
         </Text>
       )}
-      <View style={styles.tags}>
-        {agent.context && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Context</Text>
-          </View>
-        )}
-        {agent.instructions && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Instructions</Text>
-          </View>
-        )}
-        {agent.knowledge && (
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Knowledge</Text>
-          </View>
-        )}
+
+      {agent.tags && agent.tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          {agent.tags.slice(0, 3).map((tag, index) => (
+            <View key={index} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+          {agent.tags.length > 3 && (
+            <Text style={styles.moreTag}>+{agent.tags.length - 3}</Text>
+          )}
+        </View>
+      )}
+
+      <View style={styles.footer}>
+        <Text style={styles.date}>
+          Updated {new Date(agent.updatedAt).toLocaleDateString()}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -48,52 +98,102 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    borderLeftWidth: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  cardHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  name: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  date: {
-    fontSize: 12,
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  icon: {
+    fontSize: 20,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  category: {
+    fontSize: 13,
     color: '#8E8E93',
+    fontWeight: '500',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     marginLeft: 8,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
   description: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    color: '#8E8E93',
     lineHeight: 20,
+    marginBottom: 12,
   },
-  tags: {
+  tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 12,
   },
   tag: {
-    backgroundColor: '#F0F0F5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#F5F5F7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
   },
   tagText: {
     fontSize: 12,
-    color: '#5856D6',
+    color: '#8E8E93',
+    fontWeight: '500',
+  },
+  moreTag: {
+    fontSize: 12,
+    color: '#8E8E93',
     fontWeight: '600',
   },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  date: {
+    fontSize: 12,
+    color: '#C7C7CC',
+  },
 });
-
-
-
