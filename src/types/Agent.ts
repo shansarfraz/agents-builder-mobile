@@ -1,5 +1,11 @@
-export type AgentStatus = 'active' | 'draft' | 'archived';
-export type AgentCategory = 'customer-support' | 'sales' | 'content' | 'analysis' | 'development' | 'general';
+export type AgentStatus = "active" | "draft" | "archived";
+export type AgentCategory =
+  | "customer-support"
+  | "sales"
+  | "content"
+  | "analysis"
+  | "development"
+  | "general";
 
 export interface Agent {
   id: string;
@@ -42,5 +48,3 @@ export interface AgentTemplate {
   knowledge: string;
   tags: string[];
 }
-
-

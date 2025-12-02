@@ -16,11 +16,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AgentCard } from '../components/AgentCard';
 import StorageService from '../services/StorageService';
 import { Agent, AgentCategory, AgentStatus } from '../types/Agent';
+import { useTheme } from '../theme/ThemeContext';
 
 type SortOption = 'recent' | 'name' | 'category';
 type FilterOption = 'all' | AgentStatus;
 
 export const EnhancedHomeScreen = ({ navigation }: any) => {
+  const { colors, isDark, toggleTheme } = useTheme();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [filteredAgents, setFilteredAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,18 +142,18 @@ export const EnhancedHomeScreen = ({ navigation }: any) => {
       <Text style={styles.emptyStateIcon}>
         {searchQuery ? '🔍' : '🤖'}
       </Text>
-      <Text style={styles.emptyStateTitle}>
+      <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
         {searchQuery ? 'No Agents Found' : 'No Agents Yet'}
       </Text>
-      <Text style={styles.emptyStateText}>
+      <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
         {searchQuery 
           ? 'Try adjusting your search or filters'
           : 'Create your first AI agent to get started'
         }
       </Text>
       {!searchQuery && (
-        <TouchableOpacity style={styles.emptyStateButton} onPress={handleCreateAgent}>
-          <Text style={styles.emptyStateButtonText}>Create Agent</Text>
+        <TouchableOpacity style={[styles.emptyStateButton, { backgroundColor: colors.primary }]} onPress={handleCreateAgent}>
+          <Text style={[styles.emptyStateButtonText, { color: colors.textInverse }]}>Create Agent</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -159,45 +161,56 @@ export const EnhancedHomeScreen = ({ navigation }: any) => {
 
   const renderFilterChip = (label: string, isActive: boolean, onPress: () => void) => (
     <TouchableOpacity
-      style={[styles.filterChip, isActive && styles.filterChipActive]}
+      style={[
+        styles.filterChip,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        isActive && { backgroundColor: colors.primary, borderColor: colors.primary }
+      ]}
       onPress={onPress}
     >
-      <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+      <Text style={[
+        styles.filterChipText,
+        { color: colors.textSecondary },
+        isActive && { color: colors.textInverse }
+      ]}>
         {label}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Agents</Text>
-        <View style={styles.headerActions}>
-          <Text style={styles.count}>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>My Agents</Text>
+          <Text style={[styles.count, { color: colors.textSecondary }]}>
             {filteredAgents.length} {filteredAgents.length === 1 ? 'agent' : 'agents'}
           </Text>
         </View>
+        <TouchableOpacity onPress={toggleTheme} style={[styles.themeButton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={styles.themeIcon}>{isDark ? '☀️' : '🌙'}</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search agents..."
-            placeholderTextColor="#C7C7CC"
+            placeholderTextColor={colors.textTertiary}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Text style={styles.clearButton}>✕</Text>
+              <Text style={[styles.clearButton, { color: colors.textTertiary }]}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity style={styles.sortButton} onPress={handleSortPress}>
-          <Text style={styles.sortIcon}>⇅</Text>
+        <TouchableOpacity style={[styles.sortButton, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={handleSortPress}>
+          <Text style={[styles.sortIcon, { color: colors.primary }]}>⇅</Text>
         </TouchableOpacity>
       </View>
 
@@ -229,11 +242,11 @@ export const EnhancedHomeScreen = ({ navigation }: any) => {
 
       {/* FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: colors.primary }]}
         onPress={handleCreateAgent}
         activeOpacity={0.8}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <Text style={[styles.fabIcon, { color: colors.textInverse }]}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -242,27 +255,44 @@ export const EnhancedHomeScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 12,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  headerActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  title: {
+    fontSize: 34,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
   count: {
     fontSize: 15,
-    color: '#8E8E93',
+  },
+  themeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  themeIcon: {
+    fontSize: 20,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -274,10 +304,10 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
+    borderWidth: 1,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -297,20 +327,18 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1A1A1A',
   },
   clearButton: {
     fontSize: 18,
-    color: '#C7C7CC',
     padding: 4,
   },
   sortButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -325,7 +353,6 @@ const styles = StyleSheet.create({
   },
   sortIcon: {
     fontSize: 20,
-    color: '#5856D6',
   },
   filtersContainer: {
     paddingBottom: 12,
@@ -338,21 +365,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  filterChipActive: {
-    backgroundColor: '#5856D6',
-    borderColor: '#5856D6',
   },
   filterChipText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
-  },
-  filterChipTextActive: {
-    color: '#FFFFFF',
   },
   list: {
     paddingHorizontal: 20,
@@ -371,19 +388,16 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1A1A1A',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
   },
   emptyStateButton: {
-    backgroundColor: '#5856D6',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
@@ -391,7 +405,6 @@ const styles = StyleSheet.create({
   emptyStateButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
   fab: {
     position: 'absolute',
@@ -400,7 +413,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#5856D6',
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
@@ -417,7 +429,6 @@ const styles = StyleSheet.create({
   },
   fabIcon: {
     fontSize: 32,
-    color: '#FFFFFF',
     fontWeight: '300',
   },
 });
