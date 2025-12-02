@@ -116,7 +116,11 @@ export const CreateAgentWizardScreen = ({ navigation, route }: any) => {
       }
       navigation.navigate('Home');
     } catch (error) {
-      Alert.alert('Error', 'Failed to save agent. Please try again.');
+      console.error('Error saving agent:', error);
+      Alert.alert(
+        'Error', 
+        `Failed to save agent. ${error instanceof Error ? error.message : 'Please check your connection and try again.'}`
+      );
     } finally {
       setSaving(false);
     }
